@@ -24,7 +24,7 @@ private:
     bool holding;
     int held;
     int pawnDirection;
-	bool god;
+    bool god;
 
 public:
     Piece* getPieces() { return pieces; }
@@ -38,7 +38,7 @@ public:
     bool getInStaleMate() { return inStaleMate; }
     bool getHolding() { return holding; }
     int getHeld() { return held; }
-	bool getGod() { return god; }
+    bool getGod() { return god; }
 
     void setOpp(Team* o) { opp = o; }
     void setCursorX(int x) { cursorX = x; }
@@ -49,7 +49,7 @@ public:
     void setInCheck(bool c) { inCheck = c; }
     void setInCheckMate(bool c) { inCheckMate = c; }
     void setPawnDirection(int p) { pawnDirection = p; }
-	void setGod(bool g) { god = g; }
+    void setGod(bool g) { god = g; }
 
     Team(Chess* g);
 

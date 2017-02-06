@@ -240,7 +240,7 @@ class Entity : public Image
     //           Set functions            //
     ////////////////////////////////////////
 
-	// Set velocity.
+    // Set velocity.
     virtual void  setVelocity(VECTOR2 v)    {velocity = v;}
 
     // Set delta velocity. Added to velocity in update().

@@ -54,8 +54,8 @@ enum PIECE_INDICIES {
     KNIGHT2,
     BISHOP1,
     BISHOP2,
-    KING1,
-    QUEEN1
+    QUEEN1,
+    KING1
 };
 
 // graphic images
@@ -65,9 +65,10 @@ const char CURSOR_IMAGE[] = "pictures\\cursor.png";
 const char HIGHLIGHT_IMAGE[] = "pictures\\highlight.png";
 
 const int PIECES_COLS = 6;
-const int PIECES_WIDTH = 42;
-const int PIECES_HEIGHT = 70;
+const int PIECES_WIDTH = 128;
+const int PIECES_HEIGHT = 342;
 const int SQUARE_WIDTH = 80;
+const float PIECES_SCALE = 0.35f;
 
 // frame indicies for pieces.png
 enum PIECE_FRAMES {
@@ -75,14 +76,14 @@ enum PIECE_FRAMES {
     WHITE_ROOK,
     WHITE_KNIGHT,
     WHITE_BISHOP,
-    WHITE_KING,
     WHITE_QUEEN,
+    WHITE_KING,
     BLACK_PAWN,
     BLACK_ROOK,
     BLACK_KNIGHT,
     BLACK_BISHOP,
-    BLACK_KING,
-    BLACK_QUEEN
+    BLACK_QUEEN,
+    BLACK_KING
 };
 
 // audio files required by audio.cpp

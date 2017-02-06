@@ -137,7 +137,6 @@ void Chess::render()
     graphics->spriteBegin();                // begin drawing sprites
 
     background.draw();
-    PrintPieces();
     if (!gameOver) {
         if (whitesTurn && white->getHolding()) {
             HighlightMoves(white, black);
@@ -154,6 +153,7 @@ void Chess::render()
             PrintCursorAt(white->getCursorX(), white->getCursorY(), graphicsNS::GRAY & graphicsNS::ALPHA50);
         }
     }
+    PrintPieces();
     dxFont->setFontColor(graphicsNS::WHITE);
     dxFont->print(white->getMessage(), (int)white->getMessageX(), (int)white->getMessageY());
     dxFont->setFontColor(graphicsNS::BLACK);
@@ -212,22 +212,22 @@ void Chess::consoleCommand()
         }
     }
 
-	if (command == "downgrade") {
-		if (whitesTurn) {
-			Piece* pieces = white->getPieces();
-			for (int i = 0; i <= PAWN8; ++i) {
-				pieces[i].setRank(PAWN);
-				pieces[i].setCurrentFrame(WHITE_PAWN);
-			}
-		}
-		else {
-			Piece* pieces = black->getPieces();
-			for (int i = 0; i <= PAWN8; ++i) {
-				pieces[i].setRank(PAWN);
-				pieces[i].setCurrentFrame(BLACK_PAWN);
-			}
-		}
-	}
+    if (command == "downgrade") {
+        if (whitesTurn) {
+            Piece* pieces = white->getPieces();
+            for (int i = 0; i <= PAWN8; ++i) {
+                pieces[i].setRank(PAWN);
+                pieces[i].setCurrentFrame(WHITE_PAWN);
+            }
+        }
+        else {
+            Piece* pieces = black->getPieces();
+            for (int i = 0; i <= PAWN8; ++i) {
+                pieces[i].setRank(PAWN);
+                pieces[i].setCurrentFrame(BLACK_PAWN);
+            }
+        }
+    }
 
     if (command.substr(0, 4) == "move") {
         int piece, x, y;
@@ -268,14 +268,14 @@ void Chess::consoleCommand()
         StartRound();
     }
 
-	if (command == "god") {
-		if (whitesTurn) {
-			white->setGod(!white->getGod());
-		}
-		else {
-			black->setGod(!black->getGod());
-		}
-	}
+    if (command == "god") {
+        if (whitesTurn) {
+            white->setGod(!white->getGod());
+        }
+        else {
+            black->setGod(!black->getGod());
+        }
+    }
 }
 
 //=============================================================================
@@ -318,8 +318,8 @@ void Chess::StartRound() {
     white->setOpp(black);
     black->setOpp(white);
 
-	white->setGod(false);
-	black->setGod(false);
+    white->setGod(false);
+    black->setGod(false);
 
     white->setMessageY((float)MESSAGE2_Y);
     black->setMessageY((float)MESSAGE1_Y);
@@ -351,7 +351,7 @@ void Chess::InitBoard() {
         bPieces[pawn].setGridX(pawn);
         bPieces[pawn].setGridY(1);
         bPieces[pawn].setCurrentFrame(BLACK_PAWN);
-	}
+    }
     wPieces[ROOK1].setRank(ROOK);
     wPieces[ROOK1].setGridX(0);
     wPieces[ROOK1].setGridY(7);
@@ -400,14 +400,6 @@ void Chess::InitBoard() {
     bPieces[BISHOP2].setGridX(5);
     bPieces[BISHOP2].setGridY(0);
     bPieces[BISHOP2].setCurrentFrame(BLACK_BISHOP);
-    wPieces[KING1].setRank(KING);
-    wPieces[KING1].setGridX(4);
-    wPieces[KING1].setGridY(7);
-    wPieces[KING1].setCurrentFrame(WHITE_KING);
-    bPieces[KING1].setRank(KING);
-    bPieces[KING1].setGridX(4);
-    bPieces[KING1].setGridY(0);
-    bPieces[KING1].setCurrentFrame(BLACK_KING);
     wPieces[QUEEN1].setRank(QUEEN);
     wPieces[QUEEN1].setGridX(3);
     wPieces[QUEEN1].setGridY(7);
@@ -416,22 +408,33 @@ void Chess::InitBoard() {
     bPieces[QUEEN1].setGridX(3);
     bPieces[QUEEN1].setGridY(0);
     bPieces[QUEEN1].setCurrentFrame(BLACK_QUEEN);
+    wPieces[KING1].setRank(KING);
+    wPieces[KING1].setGridX(4);
+    wPieces[KING1].setGridY(7);
+    wPieces[KING1].setCurrentFrame(WHITE_KING);
+    bPieces[KING1].setRank(KING);
+    bPieces[KING1].setGridX(4);
+    bPieces[KING1].setGridY(0);
+    bPieces[KING1].setCurrentFrame(BLACK_KING);
     
 }
 
 void Chess::PrintPieces() {
     Piece* wPieces = white->getPieces();
     Piece* bPieces = black->getPieces();
-    for (int i = 0; i < NUM_PIECES; ++i) {
-        if (!(wPieces[i].getGridX() == -1 && wPieces[i].getGridY() == -1)) {
-            wPieces[i].draw();
-		}
-	}
-    for (int i = 0; i < NUM_PIECES; ++i) {
-        if (!(bPieces[i].getGridX() == -1 && bPieces[i].getGridY() == -1)) {
-            bPieces[i].draw();
-		}
-	}
+    for (int j = 0; j < BOARD_HEIGHT; ++j) {
+        for (int i = 0; i < BOARD_WIDTH; ++i) {
+            int piece = PieceAt(i, j, wPieces);
+            if (piece != -1) {
+                wPieces[piece].draw();
+                continue;
+            }
+            piece = PieceAt(i, j, bPieces);
+            if (piece != -1) {
+                bPieces[piece].draw();
+            }
+        }
+    }
 }
 
 void Chess::PrintCursorAt(int x, int y, COLOR_ARGB color) {
@@ -468,81 +471,81 @@ bool Chess::IsPieceAt(int x, int y) {
     for (int i = 0; i < NUM_PIECES; ++i) {
         if ((wPieces[i].getGridX() == x && wPieces[i].getGridY() == y) ||
             (bPieces[i].getGridX() == x && bPieces[i].getGridY() == y)) {
-			return true;
-		}
-	}
-	return false;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Chess::IsPieceAt(int x, int y, Piece pieces[]) {
     for (int i = 0; i < NUM_PIECES; ++i) {
         if (pieces[i].getGridX() == x && pieces[i].getGridY() == y) {
-			return true;
-		}
-	}
-	return false;
+            return true;
+        }
+    }
+    return false;
 }
 
 
 bool Chess::IsPieceBetween(int x1, int y1, int x2, int y2) {
-	if (x1 == x2) {
-		if (y2 < y1) {
-			int temp = y1;
-			y1 = y2;
-			y2 = temp;
-		}
-		for (int i = y1 + 1; i < y2; ++i) {
-			if (IsPieceAt(x1, i)) {
-				return true;
-			}
-		}
-	}
-	else if (y1 == y2) {
-		if (x2 < x1) {
-			int temp = x1;
-			x1 = x2;
-			x2 = temp;
-		}
-		for (int i = x1 + 1; i < x2; ++i) {
-			if (IsPieceAt(i, y1)) {
-				return true;
-			}
-		}
-	}
-	else if (abs(x1 - x2) == abs(y1 - y2)) {
-		if (x1 < x2 && y1 < y2) {
-			for (int xi = x1 + 1, yi = y1 + 1; xi < x2; ++xi, ++yi) {
-				if (IsPieceAt(xi, yi)) {
-					return true;
-				}
-			}
-		}
-		else if (x1 < x2 && y1 > y2) {
-			for (int xi = x1 + 1, yi = y1 - 1; xi < x2; ++xi, --yi) {
-				if (IsPieceAt(xi, yi)) {
-					return true;
-				}
-			}
-		}
-		else if (x1 > x2 && y1 < y2) {
-			for (int xi = x1 - 1, yi = y1 + 1; xi > x2; --xi, ++yi) {
-				if (IsPieceAt(xi, yi)) {
-					return true;
-				}
-			}
-		}
-		else { // if (x1 > x2 && y1 > y2) {
-			for (int xi = x1 - 1, yi = y1 - 1; xi > x2; --xi, --yi) {
-				if (IsPieceAt(xi, yi)) {
-					return true;
-				}
-			}
-		}
-	}
-	else {
-		// invalid call
-	}
-	return false;
+    if (x1 == x2) {
+        if (y2 < y1) {
+            int temp = y1;
+            y1 = y2;
+            y2 = temp;
+        }
+        for (int i = y1 + 1; i < y2; ++i) {
+            if (IsPieceAt(x1, i)) {
+                return true;
+            }
+        }
+    }
+    else if (y1 == y2) {
+        if (x2 < x1) {
+            int temp = x1;
+            x1 = x2;
+            x2 = temp;
+        }
+        for (int i = x1 + 1; i < x2; ++i) {
+            if (IsPieceAt(i, y1)) {
+                return true;
+            }
+        }
+    }
+    else if (abs(x1 - x2) == abs(y1 - y2)) {
+        if (x1 < x2 && y1 < y2) {
+            for (int xi = x1 + 1, yi = y1 + 1; xi < x2; ++xi, ++yi) {
+                if (IsPieceAt(xi, yi)) {
+                    return true;
+                }
+            }
+        }
+        else if (x1 < x2 && y1 > y2) {
+            for (int xi = x1 + 1, yi = y1 - 1; xi < x2; ++xi, --yi) {
+                if (IsPieceAt(xi, yi)) {
+                    return true;
+                }
+            }
+        }
+        else if (x1 > x2 && y1 < y2) {
+            for (int xi = x1 - 1, yi = y1 + 1; xi > x2; --xi, ++yi) {
+                if (IsPieceAt(xi, yi)) {
+                    return true;
+                }
+            }
+        }
+        else { // if (x1 > x2 && y1 > y2) {
+            for (int xi = x1 - 1, yi = y1 - 1; xi > x2; --xi, --yi) {
+                if (IsPieceAt(xi, yi)) {
+                    return true;
+                }
+            }
+        }
+    }
+    else {
+        // invalid call
+    }
+    return false;
 }
 
 int Chess::PieceAt(int x, int y, Piece pieces[]) {
@@ -551,5 +554,5 @@ int Chess::PieceAt(int x, int y, Piece pieces[]) {
             return i;
         }
     }
-    return 0;
+    return -1;
 }

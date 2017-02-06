@@ -125,9 +125,9 @@ bool Team::CanMoveTo(int piece, int x, int y) {
     if (pieces[piece].getGridX() == -1 && pieces[piece].getGridY() == -1) {
         return false;
     }
-	if (god && !game->IsPieceAt(x, y)) {
-		return true;
-	}
+    if (god && !game->IsPieceAt(x, y)) {
+        return true;
+    }
     switch (pieces[piece].getRank()) {
     case PAWN:
         if (x == pieces[piece].getGridX() &&
