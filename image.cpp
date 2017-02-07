@@ -54,7 +54,7 @@ Image::~Image()
 // number of columns in texture (1 to n) (0 same as 1)
 // pointer to TextureManager
 //=============================================================================
-bool Image::initialize(Graphics *g, int width, int height, int ncols,
+bool Image::initialize(Graphics *g, int width, int height, int ncols, float scale,
                        TextureManager *textureM)
 {
     try{
@@ -71,6 +71,7 @@ bool Image::initialize(Graphics *g, int width, int height, int ncols,
         cols = ncols;
         if (cols == 0)
             cols = 1;                               // if 0 cols use 1
+        setScale(scale);
 
         // configure spriteData.rect to draw currentFrame
         spriteData.rect.left = (currentFrame % cols) * spriteData.width;

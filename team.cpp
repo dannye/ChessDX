@@ -103,10 +103,6 @@ void Team::CheckForCheck() {
         messageX = MESSAGE_CHECKMATE_X;
         inStaleMate = true;
     }
-    if (inCheckMate || inStaleMate) {
-        audio->stopAllCues();
-        audio->playCue(ACQUISITION);
-    }
 }
 
 bool Team::CanMove(int piece) {

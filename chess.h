@@ -1,10 +1,11 @@
 // Programming 2D Games
 // Copyright (c) 2011 by: 
 // Charles Kelly
-// createThisClass.h
+// Daniel Harding
+// chess.h
 
-#ifndef _CREATETHIS_H           // Prevent multiple definitions if this 
-#define _CREATETHIS_H           // file is included in more than one place
+#ifndef _CHESS_H           // Prevent multiple definitions if this 
+#define _CHESS_H           // file is included in more than one place
 #define WIN32_LEAN_AND_MEAN
 
 #include <string>
@@ -15,8 +16,8 @@
 #include "textureManager.h"
 #include "image.h"
 #include "textDX.h"
-#include "team.h"
 #include "piece.h"
+#include "team.h"
 
 //=============================================================================
 // This class is the core of the game
@@ -24,8 +25,6 @@
 class Chess : public Game
 {
 private:
-    Scene* scene;
-
     // game items
     TextDX  *dxFont;            // DirectX font
 
@@ -42,8 +41,8 @@ private:
     TextureManager piece1Textures;
     TextureManager piece2Textures;
     TextureManager piece3Textures;
-    Team* white;
-    Team* black;
+    Team* white = NULL;
+    Team* black = NULL;
 
     TextureManager cursorTexture;
     Image cursor;
@@ -54,6 +53,9 @@ private:
     bool onTitlescreen;
     bool whitesTurn;
     bool gameOver;
+
+    int curBoard;
+    int curSet;
 
 public:
     // Constructor
@@ -71,6 +73,7 @@ public:
     void resetAll();
 
     void StartRound();
+    void InitPieces();
     void InitBoard();
     void PrintPieces();
     void PrintCursorAt(int x, int y, COLOR_ARGB color);

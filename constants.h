@@ -66,9 +66,6 @@ const int PIECES3_WIDTH = 60;
 const int PIECES3_HEIGHT = 154;
 const float PIECES3_SCALE = 0.7f;
 
-const int NUM_BOARDS = 2;
-const int NUM_SETS = 3;
-
 // frame indicies for pieces.png
 enum PIECE_FRAMES {
     WHITE_PAWN,

@@ -171,10 +171,14 @@ class Image
     //      ncols = number of columns in texture (1 to n) (0 same as 1)
     //      *textureM = pointer to TextureManager object
     virtual bool Image::initialize(Graphics *g, int width, int height, 
-                                    int ncols, TextureManager *textureM);
+                                    int ncols, float scale, TextureManager *textureM);
+
+    virtual bool Image::initialize(Graphics *g, int width, int height, 
+                                    int ncols, TextureManager *textureM)
+    { return initialize(g, width, height, ncols, 1.0f, textureM); }
 
     virtual bool Image::initialize(Graphics *g, TextureManager *textureM)
-    { return initialize(g, 0, 0, 0, textureM); }
+    { return initialize(g, 0, 0, 0, 1.0f, textureM); }
 
     // Flip image horizontally (mirror)
     virtual void flipHorizontal(bool flip)  {spriteData.flipHorizontal = flip;}

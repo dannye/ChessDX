@@ -1,7 +1,8 @@
 // Programming 2D Games
 // Copyright (c) 2011 by: 
 // Charles Kelly
-// createThisClass.cpp v1.1
+// Daniel Harding
+// chess.cpp v1.1
 // This class is the core of the game
 
 #include "chess.h"
@@ -21,6 +22,8 @@ Chess::~Chess()
 {
     releaseAll();           // call onLostDevice() for every graphics item
     safeDelete(dxFont);
+    safeDelete(white);
+    safeDelete(black);
 }
 
 //=============================================================================
@@ -54,9 +57,6 @@ void Chess::initialize(HWND hwnd)
     if (!board2Texture.initialize(graphics, BOARD2_IMAGE))
         throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing board texture"));
 
-    if (!board.initialize(graphics, &board1Texture))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing board"));
-
     if (!piece1Textures.initialize(graphics, CHESS_PIECES1))
         throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece textrues"));
 
@@ -77,6 +77,11 @@ void Chess::initialize(HWND hwnd)
 
     if (!highlight.initialize(graphics, &highlightTexture))
         throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing highlight"));
+
+    curBoard = 1;
+    curSet = 2;
+
+    InitBoard();
 
     titlescreen.setScale((float)GAME_WIDTH / TITLE_WIDTH);
 
@@ -108,6 +113,8 @@ void Chess::update()
                         black->CheckForCheck();
                         if (black->getInCheckMate() || black->getInStaleMate()) {
                             gameOver = true;
+                            audio->stopAllCues();
+                            audio->playCue(ACQUISITION);
                             return;
                         }
                         whitesTurn = !whitesTurn;
@@ -118,6 +125,8 @@ void Chess::update()
                         white->CheckForCheck();
                         if (white->getInCheckMate() || white->getInStaleMate()) {
                             gameOver = true;
+                            audio->stopAllCues();
+                            audio->playCue(ACQUISITION);
                             return;
                         }
                         whitesTurn = !whitesTurn;
@@ -240,14 +249,14 @@ void Chess::consoleCommand()
         if (command == "upgrade") {
             if (whitesTurn) {
                 Piece* pieces = white->getPieces();
-                for (int i = 0; i <= Team::PAWN8; ++i) {
+                for (int i = 0; i <= PAWN8; ++i) {
                     pieces[i].setRank(QUEEN);
                     pieces[i].setCurrentFrame(WHITE_QUEEN);
                 }
             }
             else {
                 Piece* pieces = black->getPieces();
-                for (int i = 0; i <= Team::PAWN8; ++i) {
+                for (int i = 0; i <= PAWN8; ++i) {
                     pieces[i].setRank(QUEEN);
                     pieces[i].setCurrentFrame(BLACK_QUEEN);
                 }
@@ -257,14 +266,14 @@ void Chess::consoleCommand()
         if (command == "downgrade") {
             if (whitesTurn) {
                 Piece* pieces = white->getPieces();
-                for (int i = 0; i <= Team::PAWN8; ++i) {
+                for (int i = 0; i <= PAWN8; ++i) {
                     pieces[i].setRank(PAWN);
                     pieces[i].setCurrentFrame(WHITE_PAWN);
                 }
             }
             else {
                 Piece* pieces = black->getPieces();
-                for (int i = 0; i <= Team::PAWN8; ++i) {
+                for (int i = 0; i <= PAWN8; ++i) {
                     pieces[i].setRank(PAWN);
                     pieces[i].setCurrentFrame(BLACK_PAWN);
                 }
@@ -272,15 +281,12 @@ void Chess::consoleCommand()
         }
 
         if (command.substr(0, 4) == "move") {
-            if (std::regex_match(command, std::regex("move 0*([0-9]|1[0-5]) 0*[0-7] 0*[0-7]"))) {
+            std::smatch match;
+            if (std::regex_match(command, match, std::regex("move 0*([0-9]|1[0-5]) 0*([0-7]) 0*([0-7])"))) {
                 int piece, x, y;
-                std::smatch match;
-                std::regex_match(command, match, std::regex("move (.+) .+ .+"));
                 piece = std::stoi(match[1].str());
-                std::regex_match(command, match, std::regex("move .+ (.+) .+"));
-                x = std::stoi(match[1].str());
-                std::regex_match(command, match, std::regex("move .+ .+ (.+)"));
-                y = std::stoi(match[1].str());
+                x = std::stoi(match[2].str());
+                y = std::stoi(match[3].str());
                 Piece* pieces;
                 if (whitesTurn) {
                     pieces = white->getPieces();
@@ -343,74 +349,16 @@ void Chess::consoleCommand()
         if (command.substr(0, 5) == "board") {
             std::smatch match;
             if (std::regex_match(command, match, std::regex("board 0*([0-1])"))) {
-                int b = std::stoi(match[1].str());
-                switch (b) {
-                case 0:
-                    if (!board.initialize(graphics, &board1Texture))
-                        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing board"));
-                    break;
-                case 1:
-                    if (!board.initialize(graphics, &board2Texture))
-                        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing board"));
-                    break;
-                default:
-                    break;
-                }
+                curBoard = std::stoi(match[1].str());
+                InitBoard();
             }
         }
 
         if (command.substr(0, 3) == "set") {
             std::smatch match;
             if (std::regex_match(command, match, std::regex("set 0*([0-2])"))) {
-                int s = std::stoi(match[1].str());
-                Piece* wPieces = white->getPieces();
-                Piece* bPieces = black->getPieces();
-                switch (s) {
-                case 0:
-                    for (int i = 0; i < NUM_PIECES; ++i) {
-                        if (!wPieces[i].initialize(graphics, PIECES1_WIDTH, PIECES1_HEIGHT, PIECES_COLS, &piece1Textures))
-                            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-                        if (!bPieces[i].initialize(graphics, PIECES1_WIDTH, PIECES1_HEIGHT, PIECES_COLS, &piece1Textures))
-                            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-                        wPieces[i].setScale(PIECES1_SCALE);
-                        bPieces[i].setScale(PIECES1_SCALE);
-                        wPieces[i].setGridX(wPieces[i].getGridX());
-                        wPieces[i].setGridY(wPieces[i].getGridY());
-                        bPieces[i].setGridX(bPieces[i].getGridX());
-                        bPieces[i].setGridY(bPieces[i].getGridY());
-                    }
-                    break;
-                case 1:
-                    for (int i = 0; i < NUM_PIECES; ++i) {
-                        if (!wPieces[i].initialize(graphics, PIECES2_WIDTH, PIECES2_HEIGHT, PIECES_COLS, &piece2Textures))
-                            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-                        if (!bPieces[i].initialize(graphics, PIECES2_WIDTH, PIECES2_HEIGHT, PIECES_COLS, &piece2Textures))
-                            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-                        wPieces[i].setScale(PIECES2_SCALE);
-                        bPieces[i].setScale(PIECES2_SCALE);
-                        wPieces[i].setGridX(wPieces[i].getGridX());
-                        wPieces[i].setGridY(wPieces[i].getGridY());
-                        bPieces[i].setGridX(bPieces[i].getGridX());
-                        bPieces[i].setGridY(bPieces[i].getGridY());
-                    }
-                    break;
-                case 2:
-                    for (int i = 0; i < NUM_PIECES; ++i) {
-                        if (!wPieces[i].initialize(graphics, PIECES3_WIDTH, PIECES3_HEIGHT, PIECES_COLS, &piece3Textures))
-                            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-                        if (!bPieces[i].initialize(graphics, PIECES3_WIDTH, PIECES3_HEIGHT, PIECES_COLS, &piece3Textures))
-                            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-                        wPieces[i].setScale(PIECES3_SCALE);
-                        bPieces[i].setScale(PIECES3_SCALE);
-                        wPieces[i].setGridX(wPieces[i].getGridX());
-                        wPieces[i].setGridY(wPieces[i].getGridY());
-                        bPieces[i].setGridX(bPieces[i].getGridX());
-                        bPieces[i].setGridY(bPieces[i].getGridY());
-                    }
-                    break;
-                default:
-                    break;
-                }
+                curSet = std::stoi(match[1].str());
+                InitPieces();
             }
         }
     }
@@ -487,25 +435,11 @@ void Chess::StartRound() {
     white->setMessageY((float)MESSAGE2_Y);
     black->setMessageY((float)MESSAGE1_Y);
 
-    InitBoard();
+    InitPieces();
 
-    audio->stopAllCues();
-    audio->playCue(MORATORIUM);
-}
-
-void Chess::InitBoard() {
     Piece* wPieces = white->getPieces();
     Piece* bPieces = black->getPieces();
-
-    for (int i = 0; i < NUM_PIECES; ++i) {
-        if (!wPieces[i].initialize(graphics, PIECES1_WIDTH, PIECES1_HEIGHT, PIECES_COLS, &piece1Textures)) {
-            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-        }
-        if (!bPieces[i].initialize(graphics, PIECES1_WIDTH, PIECES1_HEIGHT, PIECES_COLS, &piece1Textures)) {
-            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
-        }
-    }
-    for (int pawn = Team::PAWN1; pawn <= Team::PAWN8; ++pawn) {
+    for (int pawn = PAWN1; pawn <= PAWN8; ++pawn) {
         wPieces[pawn].setRank(PAWN);
         wPieces[pawn].setGridX(pawn);
         wPieces[pawn].setGridY(6);
@@ -515,71 +449,129 @@ void Chess::InitBoard() {
         bPieces[pawn].setGridY(1);
         bPieces[pawn].setCurrentFrame(BLACK_PAWN);
     }
-    wPieces[Team::ROOK1].setRank(ROOK);
-    wPieces[Team::ROOK1].setGridX(0);
-    wPieces[Team::ROOK1].setGridY(7);
-    wPieces[Team::ROOK1].setCurrentFrame(WHITE_ROOK);
-    wPieces[Team::ROOK2].setRank(ROOK);
-    wPieces[Team::ROOK2].setGridX(7);
-    wPieces[Team::ROOK2].setGridY(7);
-    wPieces[Team::ROOK2].setCurrentFrame(WHITE_ROOK);
-    bPieces[Team::ROOK1].setRank(ROOK);
-    bPieces[Team::ROOK1].setGridX(0);
-    bPieces[Team::ROOK1].setGridY(0);
-    bPieces[Team::ROOK1].setCurrentFrame(BLACK_ROOK);
-    bPieces[Team::ROOK2].setRank(ROOK);
-    bPieces[Team::ROOK2].setGridX(7);
-    bPieces[Team::ROOK2].setGridY(0);
-    bPieces[Team::ROOK2].setCurrentFrame(BLACK_ROOK);
-    wPieces[Team::KNIGHT1].setRank(KNIGHT);
-    wPieces[Team::KNIGHT1].setGridX(1);
-    wPieces[Team::KNIGHT1].setGridY(7);
-    wPieces[Team::KNIGHT1].setCurrentFrame(WHITE_KNIGHT);
-    wPieces[Team::KNIGHT2].setRank(KNIGHT);
-    wPieces[Team::KNIGHT2].setGridX(6);
-    wPieces[Team::KNIGHT2].setGridY(7);
-    wPieces[Team::KNIGHT2].setCurrentFrame(WHITE_KNIGHT);
-    bPieces[Team::KNIGHT1].setRank(KNIGHT);
-    bPieces[Team::KNIGHT1].setGridX(1);
-    bPieces[Team::KNIGHT1].setGridY(0);
-    bPieces[Team::KNIGHT1].setCurrentFrame(BLACK_KNIGHT);
-    bPieces[Team::KNIGHT2].setRank(KNIGHT);
-    bPieces[Team::KNIGHT2].setGridX(6);
-    bPieces[Team::KNIGHT2].setGridY(0);
-    bPieces[Team::KNIGHT2].setCurrentFrame(BLACK_KNIGHT);
-    wPieces[Team::BISHOP1].setRank(BISHOP);
-    wPieces[Team::BISHOP1].setGridX(2);
-    wPieces[Team::BISHOP1].setGridY(7);
-    wPieces[Team::BISHOP1].setCurrentFrame(WHITE_BISHOP);
-    wPieces[Team::BISHOP2].setRank(BISHOP);
-    wPieces[Team::BISHOP2].setGridX(5);
-    wPieces[Team::BISHOP2].setGridY(7);
-    wPieces[Team::BISHOP2].setCurrentFrame(WHITE_BISHOP);
-    bPieces[Team::BISHOP1].setRank(BISHOP);
-    bPieces[Team::BISHOP1].setGridX(2);
-    bPieces[Team::BISHOP1].setGridY(0);
-    bPieces[Team::BISHOP1].setCurrentFrame(BLACK_BISHOP);
-    bPieces[Team::BISHOP2].setRank(BISHOP);
-    bPieces[Team::BISHOP2].setGridX(5);
-    bPieces[Team::BISHOP2].setGridY(0);
-    bPieces[Team::BISHOP2].setCurrentFrame(BLACK_BISHOP);
-    wPieces[Team::QUEEN1].setRank(QUEEN);
-    wPieces[Team::QUEEN1].setGridX(3);
-    wPieces[Team::QUEEN1].setGridY(7);
-    wPieces[Team::QUEEN1].setCurrentFrame(WHITE_QUEEN);
-    bPieces[Team::QUEEN1].setRank(QUEEN);
-    bPieces[Team::QUEEN1].setGridX(3);
-    bPieces[Team::QUEEN1].setGridY(0);
-    bPieces[Team::QUEEN1].setCurrentFrame(BLACK_QUEEN);
-    wPieces[Team::KING1].setRank(KING);
-    wPieces[Team::KING1].setGridX(4);
-    wPieces[Team::KING1].setGridY(7);
-    wPieces[Team::KING1].setCurrentFrame(WHITE_KING);
-    bPieces[Team::KING1].setRank(KING);
-    bPieces[Team::KING1].setGridX(4);
-    bPieces[Team::KING1].setGridY(0);
-    bPieces[Team::KING1].setCurrentFrame(BLACK_KING);
-    
+    wPieces[ROOK1].setRank(ROOK);
+    wPieces[ROOK1].setGridX(0);
+    wPieces[ROOK1].setGridY(7);
+    wPieces[ROOK1].setCurrentFrame(WHITE_ROOK);
+    wPieces[ROOK2].setRank(ROOK);
+    wPieces[ROOK2].setGridX(7);
+    wPieces[ROOK2].setGridY(7);
+    wPieces[ROOK2].setCurrentFrame(WHITE_ROOK);
+    bPieces[ROOK1].setRank(ROOK);
+    bPieces[ROOK1].setGridX(0);
+    bPieces[ROOK1].setGridY(0);
+    bPieces[ROOK1].setCurrentFrame(BLACK_ROOK);
+    bPieces[ROOK2].setRank(ROOK);
+    bPieces[ROOK2].setGridX(7);
+    bPieces[ROOK2].setGridY(0);
+    bPieces[ROOK2].setCurrentFrame(BLACK_ROOK);
+    wPieces[KNIGHT1].setRank(KNIGHT);
+    wPieces[KNIGHT1].setGridX(1);
+    wPieces[KNIGHT1].setGridY(7);
+    wPieces[KNIGHT1].setCurrentFrame(WHITE_KNIGHT);
+    wPieces[KNIGHT2].setRank(KNIGHT);
+    wPieces[KNIGHT2].setGridX(6);
+    wPieces[KNIGHT2].setGridY(7);
+    wPieces[KNIGHT2].setCurrentFrame(WHITE_KNIGHT);
+    bPieces[KNIGHT1].setRank(KNIGHT);
+    bPieces[KNIGHT1].setGridX(1);
+    bPieces[KNIGHT1].setGridY(0);
+    bPieces[KNIGHT1].setCurrentFrame(BLACK_KNIGHT);
+    bPieces[KNIGHT2].setRank(KNIGHT);
+    bPieces[KNIGHT2].setGridX(6);
+    bPieces[KNIGHT2].setGridY(0);
+    bPieces[KNIGHT2].setCurrentFrame(BLACK_KNIGHT);
+    wPieces[BISHOP1].setRank(BISHOP);
+    wPieces[BISHOP1].setGridX(2);
+    wPieces[BISHOP1].setGridY(7);
+    wPieces[BISHOP1].setCurrentFrame(WHITE_BISHOP);
+    wPieces[BISHOP2].setRank(BISHOP);
+    wPieces[BISHOP2].setGridX(5);
+    wPieces[BISHOP2].setGridY(7);
+    wPieces[BISHOP2].setCurrentFrame(WHITE_BISHOP);
+    bPieces[BISHOP1].setRank(BISHOP);
+    bPieces[BISHOP1].setGridX(2);
+    bPieces[BISHOP1].setGridY(0);
+    bPieces[BISHOP1].setCurrentFrame(BLACK_BISHOP);
+    bPieces[BISHOP2].setRank(BISHOP);
+    bPieces[BISHOP2].setGridX(5);
+    bPieces[BISHOP2].setGridY(0);
+    bPieces[BISHOP2].setCurrentFrame(BLACK_BISHOP);
+    wPieces[QUEEN1].setRank(QUEEN);
+    wPieces[QUEEN1].setGridX(3);
+    wPieces[QUEEN1].setGridY(7);
+    wPieces[QUEEN1].setCurrentFrame(WHITE_QUEEN);
+    bPieces[QUEEN1].setRank(QUEEN);
+    bPieces[QUEEN1].setGridX(3);
+    bPieces[QUEEN1].setGridY(0);
+    bPieces[QUEEN1].setCurrentFrame(BLACK_QUEEN);
+    wPieces[KING1].setRank(KING);
+    wPieces[KING1].setGridX(4);
+    wPieces[KING1].setGridY(7);
+    wPieces[KING1].setCurrentFrame(WHITE_KING);
+    bPieces[KING1].setRank(KING);
+    bPieces[KING1].setGridX(4);
+    bPieces[KING1].setGridY(0);
+    bPieces[KING1].setCurrentFrame(BLACK_KING);
+
+    audio->stopAllCues();
+    audio->playCue(MORATORIUM);
+}
+
+void Chess::InitPieces() {
+    Piece* wPieces = white->getPieces();
+    Piece* bPieces = black->getPieces();
+    int w, h;
+    float s;
+    TextureManager* p;
+
+    switch (curSet) {
+    case 0:
+        w = PIECES1_WIDTH;
+        h = PIECES1_HEIGHT;
+        s = PIECES1_SCALE;
+        p = &piece1Textures;
+        break;
+    case 1:
+        w = PIECES2_WIDTH;
+        h = PIECES2_HEIGHT;
+        s = PIECES2_SCALE;
+        p = &piece2Textures;
+        break;
+    case 2:
+        w = PIECES3_WIDTH;
+        h = PIECES3_HEIGHT;
+        s = PIECES3_SCALE;
+        p = &piece3Textures;
+        break;
+    default:
+        break;
+    }
+
+    for (int i = 0; i < NUM_PIECES; ++i) {
+        if (!wPieces[i].initialize(graphics, w, h, PIECES_COLS, s, p)) {
+            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
+        }
+        if (!bPieces[i].initialize(graphics, w, h, PIECES_COLS, s, p)) {
+            throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece"));
+        }
+    }
+}
+
+void Chess::InitBoard() {
+    TextureManager* b;
+    switch (curBoard) {
+    case 0:
+        b = &board1Texture;
+        break;
+    case 1:
+        b = &board2Texture;
+        break;
+    default:
+        break;
+    }
+    if (!board.initialize(graphics, b))
+        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing board"));
 }
 
 void Chess::PrintPieces() {
