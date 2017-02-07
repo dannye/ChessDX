@@ -59,8 +59,10 @@ enum PIECE_INDICIES {
 };
 
 // graphic images
+const char TITLE_IMAGE[] = "pictures\\titlescreen.png";
+const char LOGO_IMAGE[] = "pictures\\logo.png";
+const char BOARD_IMAGE[] = "pictures\\board.png"; // background
 const char CHESS_PIECES[] = "pictures\\pieces.png"; // chess pieces
-const char BOARD_IMAGE[] =  "pictures\\board.png"; // background
 const char CURSOR_IMAGE[] = "pictures\\cursor.png";
 const char HIGHLIGHT_IMAGE[] = "pictures\\highlight.png";
 
@@ -69,6 +71,8 @@ const int PIECES_WIDTH = 128;
 const int PIECES_HEIGHT = 342;
 const int SQUARE_WIDTH = 80;
 const float PIECES_SCALE = 0.35f;
+const int TITLE_WIDTH = 1024;
+const int LOGO_WIDTH = 392;
 
 // frame indicies for pieces.png
 enum PIECE_FRAMES {

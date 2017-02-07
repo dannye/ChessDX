@@ -27,10 +27,16 @@ private:
     Scene* scene;
 
     // game items
-    TextureManager backgroundTexture; // textures
-    Image   background;         // background image
-
     TextDX  *dxFont;            // DirectX font
+
+    TextureManager titlescreenTexture;
+    Image titlescreen;
+
+    TextureManager logoTexture;
+    Image logo;
+
+    TextureManager boardTexture;
+    Image   board;
 
     TextureManager pieceTextures;
     Team* white;
@@ -42,6 +48,7 @@ private:
     TextureManager highlightTexture;
     Image highlight;
 
+    bool onTitlescreen;
     bool whitesTurn;
     bool gameOver;
 

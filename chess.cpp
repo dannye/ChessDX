@@ -31,18 +31,26 @@ void Chess::initialize(HWND hwnd)
 {
     Game::initialize(hwnd); // throws GameError
 
-    // background texture
-    if (!backgroundTexture.initialize(graphics, BOARD_IMAGE))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing background texture"));
-
-    // background image
-    if (!background.initialize(graphics, &backgroundTexture))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing background"));
-
     // initialize DirectX font
     // 32 pixel high Arial
-    if(dxFont->initialize(graphics, 32, false, false, "Arial") == false)
+    if (dxFont->initialize(graphics, 32, false, false, "Arial") == false)
         throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing DirectX font"));
+
+    if (!titlescreenTexture.initialize(graphics, TITLE_IMAGE))
+        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing titlescreen texture"));
+
+    titlescreen.initialize(graphics, &titlescreenTexture);
+
+    if (!logoTexture.initialize(graphics, LOGO_IMAGE))
+        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing logo texture"));
+
+    logo.initialize(graphics, &logoTexture);
+
+    if (!boardTexture.initialize(graphics, BOARD_IMAGE))
+        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing background texture"));
+
+    if (!board.initialize(graphics, &boardTexture))
+        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing background"));
 
     if (!pieceTextures.initialize(graphics, CHESS_PIECES))
         throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing piece textrues"));
@@ -57,7 +65,14 @@ void Chess::initialize(HWND hwnd)
 
     highlight.initialize(graphics, &highlightTexture);
 
-    StartRound();
+    titlescreen.setScale((float)GAME_WIDTH / TITLE_WIDTH);
+
+    logo.setX((GAME_WIDTH - LOGO_WIDTH) / 2.0f);
+    logo.setY(GAME_HEIGHT * 0.15f);
+
+    onTitlescreen = true;
+    audio->playCue(ACQUISITION);
+    //StartRound();
 
     return;
 }
@@ -67,52 +82,60 @@ void Chess::initialize(HWND hwnd)
 //=============================================================================
 void Chess::update()
 {
-    if (!gameOver) {
-        if (input->anyKeyPressed()) {
-            if (whitesTurn) {
-                if (white->update()) {
-                    black->CheckForCheck();
-                    if (black->getInCheckMate() || black->getInStaleMate()) {
-                        gameOver = true;
-                        return;
-                    }
-                    whitesTurn = !whitesTurn;
-                }
-            }
-            else {
-                if (black->update()) {
-                    white->CheckForCheck();
-                    if (white->getInCheckMate() || white->getInStaleMate()) {
-                        gameOver = true;
-                        return;
-                    }
-                    whitesTurn = !whitesTurn;
-                }
-            }
-        }
-        if (black->getInCheck()) {
-            if (black->getMessageY() < MESSAGE1_Y + 50) {
-                black->setMessageY(black->getMessageY() + frameTime * MESSAGE_SPEED);
-            }
-        }
-        else if (black->getMessageY() > MESSAGE1_Y) {
-            black->setMessageY(black->getMessageY() - frameTime * MESSAGE_SPEED);
-        }
-        if (white->getInCheck()) {
-            if (white->getMessageY() > MESSAGE2_Y - 50) {
-                white->setMessageY(white->getMessageY() - frameTime * MESSAGE_SPEED);
-            }
-        }
-        else if (white->getMessageY() < MESSAGE2_Y) {
-            white->setMessageY(white->getMessageY() + frameTime * MESSAGE_SPEED);
+    if (onTitlescreen) {
+        if (input->wasKeyPressed(ENTER_KEY)) {
+            onTitlescreen = false;
+            StartRound();
         }
     }
     else {
-        if ((black->getInCheckMate() || black->getInStaleMate()) && black->getMessageY() < MESSAGE1_Y + 50) {
-            black->setMessageY(black->getMessageY() + frameTime * MESSAGE_SPEED);
+        if (!gameOver) {
+            if (input->anyKeyPressed()) {
+                if (whitesTurn) {
+                    if (white->update()) {
+                        black->CheckForCheck();
+                        if (black->getInCheckMate() || black->getInStaleMate()) {
+                            gameOver = true;
+                            return;
+                        }
+                        whitesTurn = !whitesTurn;
+                    }
+                }
+                else {
+                    if (black->update()) {
+                        white->CheckForCheck();
+                        if (white->getInCheckMate() || white->getInStaleMate()) {
+                            gameOver = true;
+                            return;
+                        }
+                        whitesTurn = !whitesTurn;
+                    }
+                }
+            }
+            if (black->getInCheck()) {
+                if (black->getMessageY() < MESSAGE1_Y + 50) {
+                    black->setMessageY(black->getMessageY() + frameTime * MESSAGE_SPEED);
+                }
+            }
+            else if (black->getMessageY() > MESSAGE1_Y) {
+                black->setMessageY(black->getMessageY() - frameTime * MESSAGE_SPEED);
+            }
+            if (white->getInCheck()) {
+                if (white->getMessageY() > MESSAGE2_Y - 50) {
+                    white->setMessageY(white->getMessageY() - frameTime * MESSAGE_SPEED);
+                }
+            }
+            else if (white->getMessageY() < MESSAGE2_Y) {
+                white->setMessageY(white->getMessageY() + frameTime * MESSAGE_SPEED);
+            }
         }
-        if ((white->getInCheckMate() || white->getInStaleMate()) && white->getMessageY() > MESSAGE2_Y - 50) {
-            white->setMessageY(white->getMessageY() - frameTime * MESSAGE_SPEED);
+        else {
+            if ((black->getInCheckMate() || black->getInStaleMate()) && black->getMessageY() < MESSAGE1_Y + 50) {
+                black->setMessageY(black->getMessageY() + frameTime * MESSAGE_SPEED);
+            }
+            if ((white->getInCheckMate() || white->getInStaleMate()) && white->getMessageY() > MESSAGE2_Y - 50) {
+                white->setMessageY(white->getMessageY() - frameTime * MESSAGE_SPEED);
+            }
         }
     }
 }
@@ -136,28 +159,34 @@ void Chess::render()
 {
     graphics->spriteBegin();                // begin drawing sprites
 
-    background.draw();
-    if (!gameOver) {
-        if (whitesTurn && white->getHolding()) {
-            HighlightMoves(white, black);
-        }
-        else if (black->getHolding()) {
-            HighlightMoves(black, white);
-        }
-        if (whitesTurn) {
-            PrintCursorAt(white->getCursorX(), white->getCursorY(), graphicsNS::WHITE);
-            PrintCursorAt(black->getCursorX(), black->getCursorY(), graphicsNS::GRAY & graphicsNS::ALPHA50);
-        }
-        else {
-            PrintCursorAt(black->getCursorX(), black->getCursorY(), graphicsNS::BLACK);
-            PrintCursorAt(white->getCursorX(), white->getCursorY(), graphicsNS::GRAY & graphicsNS::ALPHA50);
-        }
+    if (onTitlescreen) {
+        titlescreen.draw();
+        logo.draw();
     }
-    PrintPieces();
-    dxFont->setFontColor(graphicsNS::WHITE);
-    dxFont->print(white->getMessage(), (int)white->getMessageX(), (int)white->getMessageY());
-    dxFont->setFontColor(graphicsNS::BLACK);
-    dxFont->print(black->getMessage(), (int)black->getMessageX(), (int)black->getMessageY());
+    else {
+        board.draw();
+        if (!gameOver) {
+            if (whitesTurn && white->getHolding()) {
+                HighlightMoves(white, black);
+            }
+            else if (black->getHolding()) {
+                HighlightMoves(black, white);
+            }
+            if (whitesTurn) {
+                PrintCursorAt(white->getCursorX(), white->getCursorY(), graphicsNS::WHITE);
+                PrintCursorAt(black->getCursorX(), black->getCursorY(), graphicsNS::GRAY & graphicsNS::ALPHA50);
+            }
+            else {
+                PrintCursorAt(black->getCursorX(), black->getCursorY(), graphicsNS::BLACK);
+                PrintCursorAt(white->getCursorX(), white->getCursorY(), graphicsNS::GRAY & graphicsNS::ALPHA50);
+            }
+        }
+        PrintPieces();
+        dxFont->setFontColor(graphicsNS::WHITE);
+        dxFont->print(white->getMessage(), (int)white->getMessageX(), (int)white->getMessageY());
+        dxFont->setFontColor(graphicsNS::BLACK);
+        dxFont->print(black->getMessage(), (int)black->getMessageX(), (int)black->getMessageY());
+    }
 
     graphics->spriteEnd();                  // end drawing sprites
 }
@@ -191,90 +220,97 @@ void Chess::consoleCommand()
             console->print("fps Off");
     }
 
-    if (command == "end turn") {
-        whitesTurn = !whitesTurn;
-    }
+    if (!onTitlescreen && !gameOver) {
+        if (command == "end turn") {
+            whitesTurn = !whitesTurn;
+        }
 
-    if (command == "upgrade") {
-        if (whitesTurn) {
-            Piece* pieces = white->getPieces();
-            for (int i = 0; i <= PAWN8; ++i) {
-                pieces[i].setRank(QUEEN);
-                pieces[i].setCurrentFrame(WHITE_QUEEN);
-            }
-        }
-        else {
-            Piece* pieces = black->getPieces();
-            for (int i = 0; i <= PAWN8; ++i) {
-                pieces[i].setRank(QUEEN);
-                pieces[i].setCurrentFrame(BLACK_QUEEN);
-            }
-        }
-    }
-
-    if (command == "downgrade") {
-        if (whitesTurn) {
-            Piece* pieces = white->getPieces();
-            for (int i = 0; i <= PAWN8; ++i) {
-                pieces[i].setRank(PAWN);
-                pieces[i].setCurrentFrame(WHITE_PAWN);
-            }
-        }
-        else {
-            Piece* pieces = black->getPieces();
-            for (int i = 0; i <= PAWN8; ++i) {
-                pieces[i].setRank(PAWN);
-                pieces[i].setCurrentFrame(BLACK_PAWN);
-            }
-        }
-    }
-
-    if (command.substr(0, 4) == "move") {
-        int piece, x, y;
-        std::regex moveRegex("move 0*([0-9]|1[0-5]) 0*[0-7] 0*[0-7]");
-        if (std::regex_match(command, moveRegex)) {
-            std::smatch match;
-            std::regex_match(command, match, std::regex("move (.+) .+ .+"));
-            piece = std::stoi(match[1].str());
-            std::regex_match(command, match, std::regex("move .+ (.+) .+"));
-            x = std::stoi(match[1].str());
-            std::regex_match(command, match, std::regex("move .+ .+ (.+)"));
-            y = std::stoi(match[1].str());
-            Piece* pieces;
+        if (command == "upgrade") {
             if (whitesTurn) {
-               pieces = white->getPieces();
+                Piece* pieces = white->getPieces();
+                for (int i = 0; i <= PAWN8; ++i) {
+                    pieces[i].setRank(QUEEN);
+                    pieces[i].setCurrentFrame(WHITE_QUEEN);
+                }
             }
             else {
-                pieces = black->getPieces();
+                Piece* pieces = black->getPieces();
+                for (int i = 0; i <= PAWN8; ++i) {
+                    pieces[i].setRank(QUEEN);
+                    pieces[i].setCurrentFrame(BLACK_QUEEN);
+                }
             }
-            if (!IsPieceAt(x, y)) {
-                pieces[piece].setGridX(x);
-                pieces[piece].setGridY(y);
+        }
+
+        if (command == "downgrade") {
+            if (whitesTurn) {
+                Piece* pieces = white->getPieces();
+                for (int i = 0; i <= PAWN8; ++i) {
+                    pieces[i].setRank(PAWN);
+                    pieces[i].setCurrentFrame(WHITE_PAWN);
+                }
             }
             else {
-                console->print("Unable to move piece to x, y - space not empty.");
+                Piece* pieces = black->getPieces();
+                for (int i = 0; i <= PAWN8; ++i) {
+                    pieces[i].setRank(PAWN);
+                    pieces[i].setCurrentFrame(BLACK_PAWN);
+                }
             }
-            white->CheckForCheck();
-            black->CheckForCheck();
         }
-        else {
-            console->print("Invalid move.");
+
+        if (command.substr(0, 4) == "move") {
+            int piece, x, y;
+            std::regex moveRegex("move 0*([0-9]|1[0-5]) 0*[0-7] 0*[0-7]");
+            if (std::regex_match(command, moveRegex)) {
+                std::smatch match;
+                std::regex_match(command, match, std::regex("move (.+) .+ .+"));
+                piece = std::stoi(match[1].str());
+                std::regex_match(command, match, std::regex("move .+ (.+) .+"));
+                x = std::stoi(match[1].str());
+                std::regex_match(command, match, std::regex("move .+ .+ (.+)"));
+                y = std::stoi(match[1].str());
+                Piece* pieces;
+                if (whitesTurn) {
+                    pieces = white->getPieces();
+                }
+                else {
+                    pieces = black->getPieces();
+                }
+                if (!IsPieceAt(x, y)) {
+                    pieces[piece].setGridX(x);
+                    pieces[piece].setGridY(y);
+                }
+                else {
+                    console->print("Unable to move piece to x, y - space not empty.");
+                }
+                white->CheckForCheck();
+                black->CheckForCheck();
+            }
+            else {
+                console->print("Invalid move.");
+            }
+        }
+
+        if (command == "reset") {
+            safeDelete(white);
+            safeDelete(black);
+            StartRound();
+        }
+
+        if (command == "god") {
+            if (whitesTurn) {
+                white->setGod(!white->getGod());
+            }
+            else {
+                black->setGod(!black->getGod());
+            }
         }
     }
-
-    if (command == "reset") {
-        safeDelete(white);
-        safeDelete(black);
-        StartRound();
-    }
-
-    if (command == "god") {
-        if (whitesTurn) {
-            white->setGod(!white->getGod());
-        }
-        else {
-            black->setGod(!black->getGod());
-        }
+    if (command == "quit") {
+        onTitlescreen = true;
+        audio->stopAllCues();
+        audio->playCue(ACQUISITION);
     }
 }
 
