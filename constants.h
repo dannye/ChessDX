@@ -38,41 +38,36 @@ const int MESSAGE_CHECKMATE_X = 315;
 const int MESSAGE1_Y = -30;
 const int MESSAGE2_Y = GAME_HEIGHT;
 
-// indicies for a Team's pieces array
-enum PIECE_INDICIES {
-    PAWN1,
-    PAWN2,
-    PAWN3,
-    PAWN4,
-    PAWN5,
-    PAWN6,
-    PAWN7,
-    PAWN8,
-    ROOK1,
-    ROOK2,
-    KNIGHT1,
-    KNIGHT2,
-    BISHOP1,
-    BISHOP2,
-    QUEEN1,
-    KING1
-};
-
 // graphic images
 const char TITLE_IMAGE[] = "pictures\\titlescreen.png";
 const char LOGO_IMAGE[] = "pictures\\logo.png";
-const char BOARD_IMAGE[] = "pictures\\board.png"; // background
-const char CHESS_PIECES[] = "pictures\\pieces.png"; // chess pieces
+const char BOARD1_IMAGE[] = "pictures\\board.png";
+const char BOARD2_IMAGE[] = "pictures\\board2.png";
+const char CHESS_PIECES1[] = "pictures\\pieces1.png";
+const char CHESS_PIECES2[] = "pictures\\pieces2.png";
+const char CHESS_PIECES3[] = "pictures\\pieces3.png";
 const char CURSOR_IMAGE[] = "pictures\\cursor.png";
 const char HIGHLIGHT_IMAGE[] = "pictures\\highlight.png";
 
-const int PIECES_COLS = 6;
-const int PIECES_WIDTH = 128;
-const int PIECES_HEIGHT = 342;
-const int SQUARE_WIDTH = 80;
-const float PIECES_SCALE = 0.35f;
 const int TITLE_WIDTH = 1024;
 const int LOGO_WIDTH = 392;
+const int SQUARE_WIDTH = 80;
+const int PIECES_COLS = 6;
+
+const int PIECES1_WIDTH = 300;
+const int PIECES1_HEIGHT = 300;
+const float PIECES1_SCALE = 0.20f;
+
+const int PIECES2_WIDTH = 128;
+const int PIECES2_HEIGHT = 342;
+const float PIECES2_SCALE = 0.35f;
+
+const int PIECES3_WIDTH = 60;
+const int PIECES3_HEIGHT = 154;
+const float PIECES3_SCALE = 0.7f;
+
+const int NUM_BOARDS = 2;
+const int NUM_SETS = 3;
 
 // frame indicies for pieces.png
 enum PIECE_FRAMES {
@@ -106,7 +101,7 @@ const char KNOCK[] = "knock";
 const char CAPTURE[] = "capture";
 
 const char* const AUDIO_CUES[] = { ACQUISITION, MORATORIUM, FEROCITY, KNOCK, CAPTURE };
-const int NUM_AUDIO_CUES = 5;
+const int NUM_AUDIO_CUES = sizeof(AUDIO_CUES) / sizeof(char*);
 
 // key mappings
 // In this game simple constants are used for key mappings. If variables were used

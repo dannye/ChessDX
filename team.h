@@ -27,6 +27,26 @@ private:
     bool god;
 
 public:
+    // indicies for a Team's pieces array
+    static enum PIECE_INDICIES {
+        PAWN1,
+        PAWN2,
+        PAWN3,
+        PAWN4,
+        PAWN5,
+        PAWN6,
+        PAWN7,
+        PAWN8,
+        ROOK1,
+        ROOK2,
+        KNIGHT1,
+        KNIGHT2,
+        BISHOP1,
+        BISHOP2,
+        QUEEN1,
+        KING1
+    };
+
     Piece* getPieces() { return pieces; }
     int getCursorX() { return cursorX; }
     int getCursorY() { return cursorY; }

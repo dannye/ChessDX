@@ -35,10 +35,13 @@ private:
     TextureManager logoTexture;
     Image logo;
 
-    TextureManager boardTexture;
+    TextureManager board1Texture;
+    TextureManager board2Texture;
     Image   board;
 
-    TextureManager pieceTextures;
+    TextureManager piece1Textures;
+    TextureManager piece2Textures;
+    TextureManager piece3Textures;
     Team* white;
     Team* black;
 
