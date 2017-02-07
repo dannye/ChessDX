@@ -292,6 +292,27 @@ void Chess::consoleCommand()
             }
         }
 
+        if (command == "rotate") {
+            Piece* wPieces = white->getPieces();
+            Piece* bPieces = black->getPieces();
+            for (int i = 0; i < NUM_PIECES; ++i) {
+                if (!(wPieces[i].getGridX() == -1 && wPieces[i].getGridY() == -1)) {
+                    wPieces[i].setGridX(7 - wPieces[i].getGridX());
+                    wPieces[i].setGridY(7 - wPieces[i].getGridY());
+                }
+                if (!(bPieces[i].getGridX() == -1 && bPieces[i].getGridY() == -1)) {
+                    bPieces[i].setGridX(7 - bPieces[i].getGridX());
+                    bPieces[i].setGridY(7 - bPieces[i].getGridY());
+                }
+            }
+            white->setPawnDirection(white->getPawnDirection() * -1);
+            black->setPawnDirection(black->getPawnDirection() * -1);
+            white->setCursorX(7 - white->getCursorX());
+            white->setCursorY(7 - white->getCursorY());
+            black->setCursorX(7 - black->getCursorX());
+            black->setCursorY(7 - black->getCursorY());
+        }
+
         if (command == "reset") {
             safeDelete(white);
             safeDelete(black);

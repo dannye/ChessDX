@@ -36,6 +36,7 @@ public:
     bool getInCheck() { return inCheck; }
     bool getInCheckMate() { return inCheckMate; }
     bool getInStaleMate() { return inStaleMate; }
+    int getPawnDirection() { return pawnDirection; }
     bool getHolding() { return holding; }
     int getHeld() { return held; }
     bool getGod() { return god; }
