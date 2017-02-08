@@ -133,31 +133,9 @@ void Chess::update()
                     }
                 }
             }
-            if (black->getInCheck()) {
-                if (black->getMessageY() < MESSAGE1_Y + 50) {
-                    black->setMessageY(black->getMessageY() + frameTime * MESSAGE_SPEED);
-                }
-            }
-            else if (black->getMessageY() > MESSAGE1_Y) {
-                black->setMessageY(black->getMessageY() - frameTime * MESSAGE_SPEED);
-            }
-            if (white->getInCheck()) {
-                if (white->getMessageY() > MESSAGE2_Y - 50) {
-                    white->setMessageY(white->getMessageY() - frameTime * MESSAGE_SPEED);
-                }
-            }
-            else if (white->getMessageY() < MESSAGE2_Y) {
-                white->setMessageY(white->getMessageY() + frameTime * MESSAGE_SPEED);
-            }
         }
-        else {
-            if ((black->getInCheckMate() || black->getInStaleMate()) && black->getMessageY() < MESSAGE1_Y + 50) {
-                black->setMessageY(black->getMessageY() + frameTime * MESSAGE_SPEED);
-            }
-            if ((white->getInCheckMate() || white->getInStaleMate()) && white->getMessageY() > MESSAGE2_Y - 50) {
-                white->setMessageY(white->getMessageY() - frameTime * MESSAGE_SPEED);
-            }
-        }
+        white->updateMessage(frameTime);
+        black->updateMessage(frameTime);
     }
 }
 
@@ -227,8 +205,15 @@ void Chess::consoleCommand()
         console->print("fps - toggle display of frames per second");
         console->print("end turn - switch active player");
         console->print("upgrade - all active player's pawns are now queens");
+        console->print("downgrade - all active player's upgraded queens are now pawns");
         console->print("move n x y - move active player's piece, n, to x, y");
-        console->print("reset - reset board");
+        console->print("rotate - rotate the board 180 degrees");
+        console->print("reset - start new match");
+        console->print("board x - load board design x");
+        console->print("set x - load chess piece set x");
+        console->print("sfx [on/off] - enable/disable sound effects");
+        console->print("music [on/off] - enable/disable music");
+        console->print("quit - return to title screen");
         return;
     }
 
@@ -241,125 +226,174 @@ void Chess::consoleCommand()
             console->print("fps Off");
     }
 
-    if (!onTitlescreen && !gameOver) {
-        if (command == "end turn") {
-            whitesTurn = !whitesTurn;
+    if (command == "end turn") {
+        if (onTitlescreen || gameOver) {
+            console->print("Error: not in match");
+            return;
         }
+        whitesTurn = !whitesTurn;
+    }
 
-        if (command == "upgrade") {
+    if (command == "upgrade") {
+        if (onTitlescreen || gameOver) {
+            console->print("Error: not in match");
+            return;
+        }
+        if (whitesTurn) {
+            Piece* pieces = white->getPieces();
+            for (int i = 0; i <= PAWN8; ++i) {
+                pieces[i].setRank(QUEEN);
+                pieces[i].setCurrentFrame(WHITE_QUEEN);
+            }
+        }
+        else {
+            Piece* pieces = black->getPieces();
+            for (int i = 0; i <= PAWN8; ++i) {
+                pieces[i].setRank(QUEEN);
+                pieces[i].setCurrentFrame(BLACK_QUEEN);
+            }
+        }
+    }
+
+    if (command == "downgrade") {
+        if (onTitlescreen || gameOver) {
+            console->print("Error: not in match");
+            return;
+        }
+        if (whitesTurn) {
+            Piece* pieces = white->getPieces();
+            for (int i = 0; i <= PAWN8; ++i) {
+                pieces[i].setRank(PAWN);
+                pieces[i].setCurrentFrame(WHITE_PAWN);
+            }
+        }
+        else {
+            Piece* pieces = black->getPieces();
+            for (int i = 0; i <= PAWN8; ++i) {
+                pieces[i].setRank(PAWN);
+                pieces[i].setCurrentFrame(BLACK_PAWN);
+            }
+        }
+    }
+
+    if (command.substr(0, 4) == "move") {
+        if (onTitlescreen || gameOver) {
+            console->print("Error: not in match");
+            return;
+        }
+        std::smatch match;
+        if (std::regex_match(command, match, std::regex("move 0*([0-9]|1[0-5]) 0*([0-7]) 0*([0-7])"))) {
+            int piece, x, y;
+            piece = std::stoi(match[1].str());
+            x = std::stoi(match[2].str());
+            y = std::stoi(match[3].str());
+            Piece* pieces;
             if (whitesTurn) {
-                Piece* pieces = white->getPieces();
-                for (int i = 0; i <= PAWN8; ++i) {
-                    pieces[i].setRank(QUEEN);
-                    pieces[i].setCurrentFrame(WHITE_QUEEN);
-                }
+                pieces = white->getPieces();
             }
             else {
-                Piece* pieces = black->getPieces();
-                for (int i = 0; i <= PAWN8; ++i) {
-                    pieces[i].setRank(QUEEN);
-                    pieces[i].setCurrentFrame(BLACK_QUEEN);
-                }
+                pieces = black->getPieces();
             }
-        }
-
-        if (command == "downgrade") {
-            if (whitesTurn) {
-                Piece* pieces = white->getPieces();
-                for (int i = 0; i <= PAWN8; ++i) {
-                    pieces[i].setRank(PAWN);
-                    pieces[i].setCurrentFrame(WHITE_PAWN);
-                }
+            if (!IsPieceAt(x, y)) {
+                pieces[piece].setGridX(x);
+                pieces[piece].setGridY(y);
             }
             else {
-                Piece* pieces = black->getPieces();
-                for (int i = 0; i <= PAWN8; ++i) {
-                    pieces[i].setRank(PAWN);
-                    pieces[i].setCurrentFrame(BLACK_PAWN);
-                }
+                console->print("Error: Unable to move piece to x, y - space not empty");
+            }
+            white->CheckForCheck();
+            black->CheckForCheck();
+        }
+        else {
+            console->print("Error: Invalid move");
+        }
+    }
+
+    if (command == "rotate") {
+        if (onTitlescreen) {
+            console->print("Error: not in match");
+            return;
+        }
+        Piece* wPieces = white->getPieces();
+        Piece* bPieces = black->getPieces();
+        for (int i = 0; i < NUM_PIECES; ++i) {
+            if (!(wPieces[i].getGridX() == -1 && wPieces[i].getGridY() == -1)) {
+                wPieces[i].setGridX(7 - wPieces[i].getGridX());
+                wPieces[i].setGridY(7 - wPieces[i].getGridY());
+            }
+            if (!(bPieces[i].getGridX() == -1 && bPieces[i].getGridY() == -1)) {
+                bPieces[i].setGridX(7 - bPieces[i].getGridX());
+                bPieces[i].setGridY(7 - bPieces[i].getGridY());
             }
         }
-
-        if (command.substr(0, 4) == "move") {
-            std::smatch match;
-            if (std::regex_match(command, match, std::regex("move 0*([0-9]|1[0-5]) 0*([0-7]) 0*([0-7])"))) {
-                int piece, x, y;
-                piece = std::stoi(match[1].str());
-                x = std::stoi(match[2].str());
-                y = std::stoi(match[3].str());
-                Piece* pieces;
-                if (whitesTurn) {
-                    pieces = white->getPieces();
-                }
-                else {
-                    pieces = black->getPieces();
-                }
-                if (!IsPieceAt(x, y)) {
-                    pieces[piece].setGridX(x);
-                    pieces[piece].setGridY(y);
-                }
-                else {
-                    console->print("Unable to move piece to x, y - space not empty.");
-                }
-                white->CheckForCheck();
-                black->CheckForCheck();
-            }
-            else {
-                console->print("Invalid move.");
-            }
+        white->setPawnDirection(white->getPawnDirection() * -1);
+        black->setPawnDirection(black->getPawnDirection() * -1);
+        white->setCursorX(7 - white->getCursorX());
+        white->setCursorY(7 - white->getCursorY());
+        black->setCursorX(7 - black->getCursorX());
+        black->setCursorY(7 - black->getCursorY());
+        if (white->getMessageBaseY() == MESSAGE1_Y) {
+            white->setMessageBaseY((float)MESSAGE2_Y);
+            black->setMessageBaseY((float)MESSAGE1_Y);
         }
-
-        if (command == "rotate") {
-            Piece* wPieces = white->getPieces();
-            Piece* bPieces = black->getPieces();
-            for (int i = 0; i < NUM_PIECES; ++i) {
-                if (!(wPieces[i].getGridX() == -1 && wPieces[i].getGridY() == -1)) {
-                    wPieces[i].setGridX(7 - wPieces[i].getGridX());
-                    wPieces[i].setGridY(7 - wPieces[i].getGridY());
-                }
-                if (!(bPieces[i].getGridX() == -1 && bPieces[i].getGridY() == -1)) {
-                    bPieces[i].setGridX(7 - bPieces[i].getGridX());
-                    bPieces[i].setGridY(7 - bPieces[i].getGridY());
-                }
-            }
-            white->setPawnDirection(white->getPawnDirection() * -1);
-            black->setPawnDirection(black->getPawnDirection() * -1);
-            white->setCursorX(7 - white->getCursorX());
-            white->setCursorY(7 - white->getCursorY());
-            black->setCursorX(7 - black->getCursorX());
-            black->setCursorY(7 - black->getCursorY());
-            board.setRadians(fmod(board.getRadians() + (float)PI, 2.0f * (float)PI));
+        else {
+            white->setMessageBaseY((float)MESSAGE1_Y);
+            black->setMessageBaseY((float)MESSAGE2_Y);
         }
+        white->setMessageY(GAME_HEIGHT - white->getMessageY() - 30);
+        black->setMessageY(GAME_HEIGHT - black->getMessageY() - 30);
+        board.setRadians(fmod(board.getRadians() + (float)PI, 2.0f * (float)PI));
+    }
 
-        if (command == "reset") {
-            safeDelete(white);
-            safeDelete(black);
-            StartRound();
+    if (command == "reset") {
+        if (onTitlescreen) {
+            console->print("Error: not in match");
+            return;
         }
+        safeDelete(white);
+        safeDelete(black);
+        StartRound();
+    }
 
-        if (command == "god") {
-            if (whitesTurn) {
-                white->setGod(!white->getGod());
-            }
-            else {
-                black->setGod(!black->getGod());
-            }
+    if (command == "god") {
+        if (onTitlescreen || gameOver) {
+            return;
         }
-
-        if (command.substr(0, 5) == "board") {
-            std::smatch match;
-            if (std::regex_match(command, match, std::regex("board 0*([0-1])"))) {
-                curBoard = std::stoi(match[1].str());
-                InitBoard();
-            }
+        if (whitesTurn) {
+            white->setGod(!white->getGod());
         }
+        else {
+            black->setGod(!black->getGod());
+        }
+    }
 
-        if (command.substr(0, 3) == "set") {
-            std::smatch match;
-            if (std::regex_match(command, match, std::regex("set 0*([0-2])"))) {
-                curSet = std::stoi(match[1].str());
-                InitPieces();
-            }
+    if (command.substr(0, 5) == "board") {
+        if (onTitlescreen) {
+            console->print("Error: not in match");
+            return;
+        }
+        std::smatch match;
+        if (std::regex_match(command, match, std::regex("board 0*([0-1])"))) {
+            curBoard = std::stoi(match[1].str());
+            InitBoard();
+        }
+        else {
+            console->print("Error: Invalid board ID");
+        }
+    }
+
+    if (command.substr(0, 3) == "set") {
+        if (onTitlescreen) {
+            console->print("Error: not in match");
+            return;
+        }
+        std::smatch match;
+        if (std::regex_match(command, match, std::regex("set 0*([0-2])"))) {
+            curSet = std::stoi(match[1].str());
+            InitPieces();
+        }
+        else {
+            console->print("Error: Invalid set ID");
         }
     }
     if (command == "sfx off") {
@@ -375,6 +409,10 @@ void Chess::consoleCommand()
         audio->turnMusicOn();
     }
     if (command == "quit") {
+        if (onTitlescreen) {
+            console->print("Error: not in match");
+            return;
+        }
         safeDelete(white);
         safeDelete(black);
         onTitlescreen = true;
@@ -444,8 +482,12 @@ void Chess::StartRound() {
     white->setGod(false);
     black->setGod(false);
 
-    white->setMessageY((float)MESSAGE2_Y);
-    black->setMessageY((float)MESSAGE1_Y);
+    white->setMessageX((float)MESSAGE_CHECK_X);
+    white->setMessageBaseY((float)MESSAGE2_Y);
+    white->setMessageY(white->getMessageBaseY());
+    black->setMessageX((float)MESSAGE_CHECK_X);
+    black->setMessageBaseY((float)MESSAGE1_Y);
+    black->setMessageY(black->getMessageBaseY());
 
     InitPieces();
 

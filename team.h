@@ -39,10 +39,11 @@ private:
     Piece pieces[NUM_PIECES];
     int cursorX, cursorY;
     std::string message;
+    float messageBaseY;
     float messageX, messageY;
     bool inCheck, inCheckMate, inStaleMate;
     bool holding;
-    int held;
+    PIECE_INDICIES held;
     int pawnDirection;
     bool god;
 
@@ -51,24 +52,22 @@ public:
     int getCursorX() { return cursorX; }
     int getCursorY() { return cursorY; }
     std::string getMessage() { return message; }
+    float getMessageBaseY() { return messageBaseY; }
     float getMessageX() { return messageX; }
     float getMessageY() { return messageY; }
-    bool getInCheck() { return inCheck; }
     bool getInCheckMate() { return inCheckMate; }
     bool getInStaleMate() { return inStaleMate; }
     int getPawnDirection() { return pawnDirection; }
     bool getHolding() { return holding; }
-    int getHeld() { return held; }
+    PIECE_INDICIES getHeld() { return held; }
     bool getGod() { return god; }
 
     void setOpp(Team* o) { opp = o; }
     void setCursorX(int x) { cursorX = x; }
     void setCursorY(int y) { cursorY = y; }
-    void setMessage(std::string m) { message = m; }
+    void setMessageBaseY(float y) { messageBaseY = y; }
     void setMessageX(float x) { messageX = x; }
     void setMessageY(float y) { messageY = y; }
-    void setInCheck(bool c) { inCheck = c; }
-    void setInCheckMate(bool c) { inCheckMate = c; }
     void setPawnDirection(int p) { pawnDirection = p; }
     void setGod(bool g) { god = g; }
 
@@ -76,6 +75,7 @@ public:
 
     bool update();
     bool TakeTurn();
+    void updateMessage(float ft);
     void CheckForCheck();
     bool IsInCheck();
     bool IsInCheckMate();

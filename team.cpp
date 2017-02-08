@@ -73,7 +73,7 @@ bool Team::TakeTurn() {
             }
             else {
                 if (game->IsPieceAt(cursorX, cursorY, pieces)) {
-                    held = game->PieceAt(cursorX, cursorY, pieces);
+                    held = (PIECE_INDICIES)game->PieceAt(cursorX, cursorY, pieces);
                     if (CanMove(held)) {
                         holding = true;
                     }
@@ -87,11 +87,26 @@ bool Team::TakeTurn() {
     return false;
 }
 
+void Team::updateMessage(float ft) {
+    float diff;
+    if (inCheck || inStaleMate) {
+        diff = messageY - (messageBaseY + 50 * (messageBaseY < 0 ? 1 : -1));
+    }
+    else {
+        diff = messageY - (messageBaseY);
+    }
+    if (diff > 1) {
+        messageY = messageY - ft * MESSAGE_SPEED;
+    }
+    else if (diff < -1) {
+        messageY = messageY + ft * MESSAGE_SPEED;
+    }
+}
+
 void Team::CheckForCheck() {
     if (IsInCheck()) {
         inCheck = true;
         message = "CHECK";
-        messageX = MESSAGE_CHECK_X;
         if (IsInCheckMate()) {
             message = "CHECKMATE";
             messageX = MESSAGE_CHECKMATE_X;
@@ -103,6 +118,49 @@ void Team::CheckForCheck() {
         messageX = MESSAGE_CHECKMATE_X;
         inStaleMate = true;
     }
+}
+
+bool Team::IsInCheck() {
+    int kingX = pieces[KING1].getGridX();
+    int kingY = pieces[KING1].getGridY();
+    for (int i = 0; i < NUM_PIECES; ++i) {
+        if (opp->CanMoveTo(i, kingX, kingY)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Team::IsInCheckMate() {
+    if (IsInCheck()) {
+        for (int i = 0; i < NUM_PIECES; ++i) {
+            for (int x = 0; x < BOARD_WIDTH; ++x) {
+                for (int y = 0; y < BOARD_HEIGHT; ++y) {
+                    if (CanMoveTo(i, x, y) && !WillCauseCheck(i, x, y)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool Team::IsInStaleMate() {
+    if (!IsInCheck()) {
+        for (int i = 0; i < NUM_PIECES; ++i) {
+            for (int x = 0; x < BOARD_WIDTH; ++x) {
+                for (int y = 0; y < BOARD_HEIGHT; ++y) {
+                    if (CanMoveTo(i, x, y) && !WillCauseCheck(i, x, y)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 bool Team::CanMove(int piece) {
@@ -188,49 +246,6 @@ bool Team::CanMoveTo(int piece, int x, int y) {
        break;
     }
     return canMove;
-}
-
-bool Team::IsInCheck() {
-    int kingX = pieces[KING1].getGridX();
-    int kingY = pieces[KING1].getGridY();
-    for (int i = 0; i < NUM_PIECES; ++i) {
-        if (opp->CanMoveTo(i, kingX, kingY)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Team::IsInCheckMate() {
-    if (IsInCheck()) {
-        for (int i = 0; i < NUM_PIECES; ++i) {
-            for (int x = 0; x < BOARD_WIDTH; ++x) {
-                for (int y = 0; y < BOARD_HEIGHT; ++y) {
-                    if (CanMoveTo(i, x, y) && !WillCauseCheck(i, x, y)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-bool Team::IsInStaleMate() {
-    if (!IsInCheck()) {
-        for (int i = 0; i < NUM_PIECES; ++i) {
-            for (int x = 0; x < BOARD_WIDTH; ++x) {
-                for (int y = 0; y < BOARD_HEIGHT; ++y) {
-                    if (CanMoveTo(i, x, y) && !WillCauseCheck(i, x, y)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-    return false;
 }
 
 bool Team::WillCauseCheck(int piece, int x, int y) {
