@@ -24,6 +24,8 @@ class Audio
     void *mapWaveBank;          // call UnmapViewOfFile() to release file
     void *soundBankData;
     bool coInitialized;         // set true if coInitialize is successful
+    bool sfxOn;
+    bool musicOn;
 
   public:
     // Constructor
@@ -57,6 +59,11 @@ class Audio
     // Resume playback of paused sound specified by category from sound bank.
     // If category does not exist no error occurs.
     void resumeCategory(const char category[]);
+
+    void turnSfxOn()    { sfxOn = true; }
+    void turnSfxOff()   { sfxOn = false; }
+    void turnMusicOn()  { musicOn = true; resumeCategory("Default"); }
+    void turnMusicOff() { musicOn = false; pauseCategory("Default"); }
 };
 
 #endif

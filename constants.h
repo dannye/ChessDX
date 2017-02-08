@@ -97,6 +97,10 @@ const char FEROCITY[] = "Ferocity";
 const char KNOCK[] = "knock";
 const char CAPTURE[] = "capture";
 
+const char* const MUSIC_CUES[] = { ACQUISITION, MORATORIUM, FEROCITY };
+const int NUM_MUSIC_CUES = sizeof(MUSIC_CUES) / sizeof(char*);
+const char* const SFX_CUES[] = { KNOCK, CAPTURE };
+const int NUM_SFX_CUES = sizeof(SFX_CUES) / sizeof(char*);
 const char* const AUDIO_CUES[] = { ACQUISITION, MORATORIUM, FEROCITY, KNOCK, CAPTURE };
 const int NUM_AUDIO_CUES = sizeof(AUDIO_CUES) / sizeof(char*);
 

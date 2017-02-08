@@ -362,6 +362,18 @@ void Chess::consoleCommand()
             }
         }
     }
+    if (command == "sfx off") {
+        audio->turnSfxOff();
+    }
+    if (command == "sfx on") {
+        audio->turnSfxOn();
+    }
+    if (command == "music off") {
+        audio->turnMusicOff();
+    }
+    if (command == "music on") {
+        audio->turnMusicOn();
+    }
     if (command == "quit") {
         safeDelete(white);
         safeDelete(black);

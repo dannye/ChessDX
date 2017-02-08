@@ -163,6 +163,8 @@ HRESULT Audio::initialize()
     if( FAILED( result ) )
         return HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
 
+    sfxOn = true;
+    musicOn = true;
     return S_OK;
 
 }
@@ -183,6 +185,20 @@ void Audio::run()
 //=============================================================================
 void Audio::playCue(const char cue[])
 {
+    for (int i = 0; i < NUM_SFX_CUES; ++i) {
+        if (strcmp(cue, SFX_CUES[i]) == 0) {
+            if (!sfxOn) {
+                return;
+            }
+        }
+    }
+    for (int i = 0; i < NUM_MUSIC_CUES; ++i) {
+        if (strcmp(cue, MUSIC_CUES[i]) == 0) {
+            if (!musicOn) {
+                return;
+            }
+        }
+    }
     if (soundBank == NULL)
         return;
     cueI = soundBank->GetCueIndex( cue );       // get cue index from sound bank
